@@ -106,7 +106,7 @@ namespace umbriel {
       static const OutputRule defaults;
       const OutputRule& lhs = before != nullptr ? *before : defaults;
       const OutputRule& rhs = after != nullptr ? *after : defaults;
-      return lhs.workspaces == rhs.workspaces;
+      return lhs.workspaces == rhs.workspaces && lhs.dynamicAfter == rhs.dynamicAfter;
     }
 
   } // namespace

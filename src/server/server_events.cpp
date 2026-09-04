@@ -1861,8 +1861,8 @@ namespace umbriel {
         continue;
       }
 
-      Workspace* workspace = nullptr;
-      if (targetGroup->dynamic()) {
+      Workspace* workspace = targetGroup->workspaceNamed(groupHome.workspaceName);
+      if (workspace == nullptr && targetGroup->dynamic()) {
         const size_t desired = workspaceOrder(groupHome.workspaceName);
         if (desired != std::numeric_limits<size_t>::max() && desired >= 1) {
           // A recreated dynamic group starts with workspace 1. Materialize an
@@ -1875,7 +1875,7 @@ namespace umbriel {
           }
           workspace = targetGroup->workspaceNamed(groupHome.workspaceName);
         }
-      } else {
+      } else if (workspace == nullptr) {
         workspace = targetGroup->workspaceForSelector(groupHome.workspaceName);
       }
       const bool selectorMatched = workspace != nullptr;

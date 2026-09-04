@@ -428,6 +428,13 @@ UMBRIEL_TEST(outputStateAndWorkspaceInventoryAreIndependent) {
   CHECK(inventoryEffects.workspaceInventory);
   CHECK(inventoryEffects.workspaceLayout);
 
+  Config dynamicAfterChanged = inventoryChanged;
+  dynamicAfterChanged.outputs[0].dynamicAfter = true;
+  const ConfigEffects dynamicAfterEffects = ConfigEffects::between(inventoryChanged, dynamicAfterChanged);
+  CHECK(!dynamicAfterEffects.outputState);
+  CHECK(dynamicAfterEffects.workspaceInventory);
+  CHECK(dynamicAfterEffects.workspaceLayout);
+
   Config disabled = before;
   disabled.outputs[0].enabled = false;
   const ConfigEffects disableEffects = ConfigEffects::between(before, disabled);

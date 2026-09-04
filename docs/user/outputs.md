@@ -83,6 +83,7 @@ workspaces = 5
 | `hdr`                                        | string                            | `"off"`     | HDR policy: `"off"`, `"on"`, `"auto"`, or `"fullscreen"`.                                                                                           |
 | `sdr_white`                                  | float                             | `203`       | SDR reference white in cd/m2 while the output is in HDR mode (80-1000).                                                                             |
 | `workspaces`                                 | int, string array, or `"dynamic"` | `"dynamic"` | Dynamic numbered workspaces, a static count from 1 to 64, or a static ordered list of 1 to 64 names.                                                |
+| `dynamic_after`                              | bool                              | `false`     | Keep the explicit workspace inventory and maintain a numbered dynamic tail after it.                                                              |
 | `transform`                                  | string                            | `"normal"`  | Output rotation/flip.                                                                                                                               |
 | `layout.scrolling.default_width_fraction`    | float                             | inherited   | Initial scrolling strip-axis extent for new columns on this output (0.1-1.0). Inherits the global value when omitted.                               |
 

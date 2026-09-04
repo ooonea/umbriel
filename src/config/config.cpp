@@ -1265,16 +1265,20 @@ namespace umbriel {
         }
         OutputRule rule;
         rule.name = name;
+        const toml::node* dynamicAfterNode = keys.node("dynamic_after");
         keys.boolean("enabled", rule.enabled)
             .boolean("tearing", rule.allowTearing)
-            .boolean("direct_scanout", rule.directScanout);
+            .boolean("direct_scanout", rule.directScanout)
+            .boolean("dynamic_after", rule.dynamicAfter);
         keys.sub("layout", [&](Section& layout) {
           layout.sub("scrolling", [&](Section& scrolling) {
             scrolling.real("default_width_fraction", 0.1, 1.0, rule.layout.scrolling.defaultWidthFraction);
           });
         });
+        bool explicitWorkspaceInventory = false;
         if (const toml::node* workspacesNode = keys.take("workspaces")) {
           if (const auto count = workspacesNode->value<std::int64_t>()) {
+            explicitWorkspaceInventory = true;
             if (*count < 1 || *count > static_cast<std::int64_t>(kMaxWorkspaces)) {
               errorAt(
                   workspacesNode->source(), "output.{}.workspaces must be an integer from 1 to {}", name, kMaxWorkspaces
@@ -1283,6 +1287,7 @@ namespace umbriel {
               rule.workspaces = numericWorkspaceNames(static_cast<size_t>(*count));
             }
           } else if (const auto* names = workspacesNode->as_array()) {
+            explicitWorkspaceInventory = true;
             bool valid = true;
             if (names->empty() || names->size() > kMaxWorkspaces) {
               errorAt(
@@ -1305,6 +1310,17 @@ namespace umbriel {
                 valid = false;
                 continue;
               }
+              size_t dynamicIndex = 0;
+              const auto [end, error] = std::from_chars(value->data(), value->data() + value->size(), dynamicIndex);
+              if (rule.dynamicAfter
+                  && error == std::errc{}
+                  && end == value->data() + value->size()
+                  && *value == std::to_string(dynamicIndex)
+                  && dynamicIndex > names->size()) {
+                errorAt(item.source(), "output.{}.workspaces name '{}' conflicts with the dynamic tail", name, *value);
+                valid = false;
+                continue;
+              }
               parsed.push_back(*value);
             }
             if (valid) {
@@ -1321,6 +1337,9 @@ namespace umbriel {
                 workspacesNode->source(), R"(output.{}.workspaces must be a count, a name array, or "dynamic")", name
             );
           }
+        }
+        if (rule.dynamicAfter && !explicitWorkspaceInventory) {
+          errorAt(dynamicAfterNode->source(), "output.{}.dynamic_after requires an explicit workspace inventory", name);
         }
 
         if (const toml::node* modeNode = keys.take("mode")) {

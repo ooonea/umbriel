@@ -224,6 +224,7 @@ namespace umbriel {
     [[nodiscard]] Workspace* active() const { return m_active; }
     [[nodiscard]] Workspace* previous() const { return m_previous; }
     [[nodiscard]] bool dynamic() const { return m_dynamic; }
+    [[nodiscard]] size_t fixedWorkspaceCount() const { return m_fixedCount; }
     [[nodiscard]] Workspace* workspaceAt(size_t index) const;
     [[nodiscard]] Workspace* workspaceAtClamped(size_t index) const;
     [[nodiscard]] Workspace* workspaceNamed(std::string_view name) const;
@@ -278,6 +279,7 @@ namespace umbriel {
     Workspace* m_active = nullptr;
     Workspace* m_previous = nullptr;
     bool m_dynamic = false;
+    size_t m_fixedCount = 0;
     uint32_t m_nextHandleSerial = 1;
     std::vector<std::unique_ptr<Workspace>> m_workspaces;
     AnimatedValue m_slideAnim;

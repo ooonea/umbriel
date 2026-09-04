@@ -1125,6 +1125,27 @@ UMBRIEL_TEST(outputEnabledFlagParsesAndDefaultsTrue) {
   CHECK(containsDiagnostic(store, "ignoring output.DP-1.enabled"));
 }
 
+UMBRIEL_TEST(outputDynamicAfterRequiresANonConflictingExplicitInventory) {
+  const TempConfig file;
+  ConfigStore& store = umbriel::configStore();
+  store.setRootPath(file.path(), true);
+
+  file.write("[output.DP-1]\nworkspaces = [\"WEB\", \"CHAT\"]\ndynamic_after = true\n");
+  CHECK(store.reload().success);
+  CHECK(store.config().outputs[0].dynamicAfter);
+
+  file.write("[output.DP-1]\ndynamic_after = true\n");
+  CHECK(!store.reload().success);
+  CHECK(containsDiagnostic(store, "dynamic_after requires an explicit workspace inventory"));
+
+  file.write("[output.DP-1]\nworkspaces = [\"WEB\", \"3\"]\ndynamic_after = true\n");
+  CHECK(!store.reload().success);
+  CHECK(containsDiagnostic(store, "name '3' conflicts with the dynamic tail"));
+
+  file.write("[output.DP-1]\nworkspaces = [\"2\", \"WEB\"]\ndynamic_after = true\n");
+  CHECK(store.reload().success);
+}
+
 UMBRIEL_TEST(semanticColorsLoadFromTheirOwnSection) {
   const TempConfig file;
   file.write(R"(

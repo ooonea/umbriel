@@ -78,6 +78,7 @@ honor_restored_maximize = false                 # Honor restored maximized state
 # hdr = "auto"                                  # off, on, auto, or fullscreen
 # sdr_white = 203                               # SDR reference white in cd/m2 during HDR
 # workspaces = 5                                # Omit for dynamic workspaces
+# dynamic_after = false                         # Add a dynamic tail after an explicit inventory
 
 # Replace the count with ["WEB", "CHAT", "MEDIA"] for named static workspaces,
 # or with "dynamic" to state the dynamic default explicitly.

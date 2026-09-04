@@ -2034,7 +2034,7 @@ namespace umbriel {
         continue;
       }
       const size_t rowCount = std::min(group->workspaceCount(), state->workspaceBackgrounds.size());
-      for (size_t index = 0; index < rowCount; ++index) {
+      for (size_t index = group->fixedWorkspaceCount(); index < rowCount; ++index) {
         // Index zero has no preceding preview. Its insertion gap begins at the output edge, so dynamic workspaces can
         // also be inserted before the first preview.
         const int upperBottom =
