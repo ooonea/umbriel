@@ -4,7 +4,7 @@ Choose a workspace model, inspect its state, and customize layout per workspace.
 
 ## Choose a workspace model
 
-Each output can use dynamic or static workspaces.
+Each output can use dynamic or static workspaces, up to 64 including empty ones.
 
 ### Dynamic workspaces
 

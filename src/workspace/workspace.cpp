@@ -1576,7 +1576,7 @@ namespace umbriel {
   }
 
   Workspace* WorkspaceGroup::insertDynamicWorkspace(size_t index) {
-    if (!m_dynamic || m_output == nullptr || m_output->wlr() == nullptr) {
+    if (!m_dynamic || m_output == nullptr || m_output->wlr() == nullptr || m_workspaces.size() >= kMaxWorkspaces) {
       return nullptr;
     }
     index = std::min(index, m_workspaces.size());
@@ -1747,7 +1747,7 @@ namespace umbriel {
       return;
     }
 
-    // Dynamic groups keep one trailing empty workspace. Prefer an empty active workspace so closing its last window
+    // Dynamic groups keep a trailing empty below the limit. Prefer an empty active workspace so closing its last window
     // does not destroy the workspace the user is currently viewing; otherwise retain the existing trailing empty to
     // avoid replacing its protocol identity on every reconciliation.
     const bool emptyAbove = config().workspaces.emptyAbove;
@@ -1789,10 +1789,10 @@ namespace umbriel {
     while (m_workspaces.size() < minimum) {
       backKeeper = appendDynamicWorkspace();
     }
-    if (backKeeper == nullptr) {
+    if (backKeeper == nullptr && m_workspaces.size() < kMaxWorkspaces) {
       appendDynamicWorkspace();
     }
-    if (emptyAbove && frontKeeper == nullptr) {
+    if (emptyAbove && frontKeeper == nullptr && m_workspaces.size() < kMaxWorkspaces) {
       prependDynamicWorkspace();
     }
 
@@ -2062,6 +2062,9 @@ namespace umbriel {
     if (m_dynamic) {
       kLog.debug("using trailing dynamic workspace for create request on {}", m_output->wlr()->name);
       return m_workspaces.empty() ? appendDynamicWorkspace() : m_workspaces.back().get();
+    }
+    if (m_workspaces.size() >= kMaxWorkspaces) {
+      return nullptr;
     }
 
     wlr_ext_workspace_manager_v1* manager = m_server->workspaceManager();

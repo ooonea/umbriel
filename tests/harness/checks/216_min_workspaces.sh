@@ -83,4 +83,17 @@ write_config '[output.HEADLESS-1]
 min_workspaces = 4'
 expect_names HEADLESS-1 "1 2 3 4" "static inventory replaced by a floored dynamic one"
 
+write_config '[workspaces]
+empty_above = true
+[output.HEADLESS-1]
+min_workspaces = 64'
+"$UMBRIEL" msg workspace-switch:64/HEADLESS-1 > /dev/null
+foot --title=workspace-limit-view sleep 120 > /dev/null 2>&1 &
+wait_for_windows 1
+expect_names HEADLESS-1 "$(seq -s ' ' 64)" "trailing empty respects the limit"
+[[ $(workspace_index_of_window) == 64 ]]
+"$UMBRIEL" msg window-move-to-workspace:1/HEADLESS-1 > /dev/null
+expect_names HEADLESS-1 "$(seq -s ' ' 64)" "leading empty respects the limit"
+[[ $(workspace_index_of_window) == 1 ]]
+
 echo "min_workspaces holds a per-output floor, grows above it, and prunes back to it"
