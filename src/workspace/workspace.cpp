@@ -2060,8 +2060,14 @@ namespace umbriel {
 
   Workspace* WorkspaceGroup::createWorkspace(const char* name) {
     if (m_dynamic) {
-      kLog.debug("using trailing dynamic workspace for create request on {}", m_output->wlr()->name);
-      return m_workspaces.empty() ? appendDynamicWorkspace() : m_workspaces.back().get();
+      const auto empty = std::ranges::find_if(m_workspaces.rbegin(), m_workspaces.rend(), [](const auto& workspace) {
+        return !workspace->hasViews();
+      });
+      if (empty != m_workspaces.rend()) {
+        kLog.debug("using empty dynamic workspace for create request on {}", m_output->wlr()->name);
+        return empty->get();
+      }
+      return insertDynamicWorkspace(m_workspaces.size());
     }
     if (m_workspaces.size() >= kMaxWorkspaces) {
       return nullptr;
