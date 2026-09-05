@@ -220,8 +220,31 @@ UMBRIEL_TEST(workspaceInventoryResolvesStaticAndDynamicOutputs) {
   CHECK_EQ(staticSet.workspaces[1].name, std::string{"web"});
   CHECK_EQ(staticSet.workspaces[1].layout.gap, 24);
 
+  config.outputs[0].dynamicAfter = true;
+  const auto hybridSet = umbriel::resolveWorkspacesForOutput(config, identity("DP-1"));
+  CHECK(hybridSet.dynamic);
+  CHECK_EQ(hybridSet.fixedCount, size_t{2});
+  CHECK_EQ(hybridSet.workspaces.size(), size_t{3});
+  CHECK_EQ(hybridSet.workspaces[0].name, std::string{"main"});
+  CHECK_EQ(hybridSet.workspaces[1].name, std::string{"web"});
+  CHECK_EQ(hybridSet.workspaces[2].name, std::string{"3"});
+
+  WorkspaceConfig fixedIndex;
+  fixedIndex.index = 1;
+  fixedIndex.output = "DP-1";
+  CHECK(umbriel::workspaceRuleTargetExists(config, fixedIndex));
+  WorkspaceConfig missingDynamicName;
+  missingDynamicName.name = "1";
+  missingDynamicName.output = "DP-1";
+  CHECK(!umbriel::workspaceRuleTargetExists(config, missingDynamicName));
+  WorkspaceConfig futureDynamicName;
+  futureDynamicName.name = "4";
+  futureDynamicName.output = "DP-1";
+  CHECK(umbriel::workspaceRuleTargetExists(config, futureDynamicName));
+
   const auto dynamicSet = umbriel::resolveWorkspacesForOutput(config, identity("DP-2"));
   CHECK(dynamicSet.dynamic);
+  CHECK_EQ(dynamicSet.fixedCount, size_t{0});
   CHECK_EQ(dynamicSet.workspaces.size(), size_t{1});
   CHECK_EQ(dynamicSet.workspaces[0].name, std::string{"1"});
 

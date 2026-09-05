@@ -772,7 +772,7 @@ UMBRIEL_TEST(dynamicWorkspaceRulesCanAddressPositionsBeyondStaticInventoryLimit)
           "[[workspace]]\noutput = \"DP-1\"\nindex = "
         + position
         + "\nlayout.gap = 19\n"
-          "[[window_rule]]\napp_id = \"foot\"\ndefault_workspace = "
+          "[[window_rule]]\nmatch.app_id = \"foot\"\ndefault_workspace = "
         + position
         + "\n"
     );
@@ -780,7 +780,8 @@ UMBRIEL_TEST(dynamicWorkspaceRulesCanAddressPositionsBeyondStaticInventoryLimit)
     CHECK(store.diagnostics().empty());
     CHECK_EQ(store.config().workspaceRules.size(), size_t{2});
     const auto layout = umbriel::resolveWorkspaceLayout(
-        store.config(), {.connector = "DP-1"}, position, static_cast<size_t>(index - 1)
+        store.config(), {.connector = "DP-1", .make = {}, .model = {}, .serial = {}}, position,
+        static_cast<size_t>(index - 1)
     );
     CHECK_EQ(layout.gap, 19);
     const auto window = umbriel::resolveWindowRules(store.config(), "foot", "", "", ContentType::None, false);
@@ -798,7 +799,7 @@ UMBRIEL_TEST(workspacePositionsRejectNonPositiveAndOverflowingIntegers) {
     CHECK(!store.reload().success);
     CHECK(containsDiagnostic(store, "index must be an integer from 1 to"));
 
-    file.write("[[window_rule]]\napp_id = \"foot\"\ndefault_workspace = " + position + "\n");
+    file.write("[[window_rule]]\nmatch.app_id = \"foot\"\ndefault_workspace = " + position + "\n");
     CHECK(store.reload().success);
     CHECK(containsDiagnostic(store, "ignoring window_rule.default_workspace"));
     const auto window = umbriel::resolveWindowRules(store.config(), "foot", "", "", ContentType::None, false);
@@ -1175,6 +1176,39 @@ UMBRIEL_TEST(outputEnabledFlagParsesAndDefaultsTrue) {
   CHECK(store.reload().success);
   CHECK(store.config().outputs[0].enabled);
   CHECK(containsDiagnostic(store, "ignoring output.DP-1.enabled"));
+}
+
+UMBRIEL_TEST(outputDynamicAfterRequiresANonConflictingExplicitInventory) {
+  const TempConfig file;
+  ConfigStore& store = umbriel::configStore();
+  store.setRootPath(file.path(), true);
+
+  file.write("[output.DP-1]\nworkspaces = [\"WEB\", \"CHAT\"]\ndynamic_after = true\n");
+  CHECK(store.reload().success);
+  CHECK(store.config().outputs[0].dynamicAfter);
+
+  file.write(
+      "[output.DP-1]\nworkspaces = 64\ndynamic_after = true\n"
+      "[[workspace]]\noutput = \"DP-1\"\nname = \"65\"\nlayout.gap = 17\n"
+      "[[workspace]]\noutput = \"DP-1\"\nindex = 65\nlayout.gap = 19\n"
+  );
+  CHECK(store.reload().success);
+  CHECK(store.diagnostics().empty());
+  const auto workspaces =
+      umbriel::resolveWorkspacesForOutput(store.config(), {.connector = "DP-1", .make = {}, .model = {}, .serial = {}});
+  CHECK_EQ(workspaces.workspaces.size(), size_t{65});
+  CHECK_EQ(workspaces.workspaces.back().layout.gap, 19);
+
+  file.write("[output.DP-1]\ndynamic_after = true\n");
+  CHECK(!store.reload().success);
+  CHECK(containsDiagnostic(store, "dynamic_after requires an explicit workspace inventory"));
+
+  file.write("[output.DP-1]\nworkspaces = [\"WEB\", \"3\"]\ndynamic_after = true\n");
+  CHECK(!store.reload().success);
+  CHECK(containsDiagnostic(store, "name '3' conflicts with the dynamic tail"));
+
+  file.write("[output.DP-1]\nworkspaces = [\"2\", \"WEB\"]\ndynamic_after = true\n");
+  CHECK(store.reload().success);
 }
 
 UMBRIEL_TEST(semanticColorsLoadFromTheirOwnSection) {

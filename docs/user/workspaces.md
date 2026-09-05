@@ -36,14 +36,33 @@ workspaces = 5
 workspaces = ["WEB", "CHAT", "VIDEO"]
 ```
 
+### Fixed prefix with a dynamic tail
+
+Set `dynamic_after = true` beside an explicit workspace inventory to keep those
+workspaces fixed and add a numbered dynamic tail. The tail keeps one empty
+workspace at the end, grows when that workspace gains a window, and removes
+other empty tail workspaces.
+
+```toml
+[output.DP-1]
+workspaces = ["WEB", "CHAT", "VIDEO"]
+dynamic_after = true
+```
+
+This starts with `WEB`, `CHAT`, `VIDEO`, and an empty workspace named `4`.
+Dynamic workspace numbers are their 1-based positions, so a prefix name cannot
+be a canonical decimal number greater than the prefix length. `empty_above`
+applies only to a fully dynamic output.
+
 ### Change workspaces on reload
 
 Workspace changes apply when you save a valid configuration. For static
 workspaces, Umbriel first matches existing workspaces by name and then by
 position. Windows from a removed workspace move to the nearest remaining one.
 
-Switching to dynamic workspaces keeps populated and active workspaces,
-renumbers them, and adds an empty workspace at the end.
+Switching to dynamic or hybrid workspaces keeps populated and active
+workspaces, renumbers the dynamic entries, and adds an empty workspace at the
+end. A hybrid reload preserves fixed workspaces by name before position.
 
 Other output and layout settings are refreshed during a reload as well.
 

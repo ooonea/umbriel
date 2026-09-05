@@ -116,6 +116,7 @@ namespace umbriel {
   };
   struct ResolvedWorkspaceSet {
     bool dynamic = false;
+    size_t fixedCount = 0;
     std::vector<ResolvedWorkspace> workspaces;
     bool operator==(const ResolvedWorkspaceSet&) const = default;
   };
@@ -186,6 +187,7 @@ namespace umbriel {
     float sdrWhite = 203.0F;
     // Explicit workspace inventory. Omitted means dynamic workspaces.
     std::optional<std::vector<std::string>> workspaces;
+    bool dynamicAfter = false;
     struct Layout {
       struct Scrolling {
         // Initial strip-axis extent inherited by workspaces on this output.

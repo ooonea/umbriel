@@ -51,9 +51,9 @@ namespace umbriel {
       return std::ranges::find(names, rule.name) != names.end();
     }
 
-    bool dynamicRuleMatches(const WorkspaceConfig& rule) {
+    bool dynamicRuleMatches(const WorkspaceConfig& rule, size_t first = 1) {
       if (rule.index) {
-        return *rule.index >= 1;
+        return *rule.index >= 1 && static_cast<size_t>(*rule.index) >= first;
       }
       if (rule.name.empty()
           || !std::ranges::all_of(rule.name, [](char value) { return value >= '0' && value <= '9'; })) {
@@ -61,7 +61,7 @@ namespace umbriel {
       }
       size_t index = 0;
       const auto [end, error] = std::from_chars(rule.name.data(), rule.name.data() + rule.name.size(), index);
-      return error == std::errc{} && end == rule.name.data() + rule.name.size() && index >= 1;
+      return error == std::errc{} && end == rule.name.data() + rule.name.size() && index >= first;
     }
 
     void applyWorkspaceLayoutOverrides(
@@ -141,8 +141,14 @@ namespace umbriel {
 
   bool workspaceRuleTargetExists(const Config& config, const WorkspaceConfig& rule) {
     if (!rule.output.empty()) {
-      const auto names = workspaceNamesForOutput(config, rule.output);
-      return names ? workspaceRuleMatches(rule, *names) : dynamicRuleMatches(rule);
+      const auto output = std::ranges::find_if(config.outputs, [&](const OutputRule& candidate) {
+        return candidate.name == rule.output;
+      });
+      if (output == config.outputs.end() || !output->workspaces) {
+        return dynamicRuleMatches(rule);
+      }
+      return workspaceRuleMatches(rule, *output->workspaces)
+          || (output->dynamicAfter && dynamicRuleMatches(rule, output->workspaces->size() + 1));
     }
 
     if (dynamicRuleMatches(rule)) {
@@ -363,6 +369,7 @@ namespace umbriel {
   }
 
   ResolvedWorkspaceSet resolveWorkspacesForOutput(const Config& config, const OutputIdentity& identity) {
+    const OutputRule* output = matchingOutputRule(config, identity);
     const auto names = workspaceNamesForIdentity(config, identity);
     ResolvedWorkspaceSet result;
     if (!names) {
@@ -379,6 +386,13 @@ namespace umbriel {
     result.workspaces.reserve(names->size());
     for (size_t index = 0; index < names->size(); ++index) {
       const auto& name = (*names)[index];
+      result.workspaces.push_back({name, resolveWorkspaceLayout(config, identity, name, index)});
+    }
+    if (output != nullptr && output->dynamicAfter) {
+      result.dynamic = true;
+      result.fixedCount = names->size();
+      const size_t index = names->size();
+      const std::string name = std::to_string(index + 1);
       result.workspaces.push_back({name, resolveWorkspaceLayout(config, identity, name, index)});
     }
     return result;

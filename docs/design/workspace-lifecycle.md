@@ -77,6 +77,13 @@ removed, that destination becomes active.
 
 Empty static workspaces remain in the inventory.
 
+## Fixed prefix with a dynamic tail
+
+An explicit inventory with `dynamic_after = true` is a fixed prefix. Entries
+after its boundary obey the dynamic inventory invariants. Dynamic reconciliation
+never removes or renames a prefix workspace, and insertion or reordering cannot
+cross the boundary. `empty_above` does not add a sentinel before the prefix.
+
 ## Switching inventory type
 
 Switching from a static inventory to dynamic workspaces keeps every populated
